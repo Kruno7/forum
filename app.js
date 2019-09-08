@@ -3,21 +3,24 @@ const app = express()
 const morgan = require('morgan')
 const bodyParser = require('body-parser')
 
+const checkAuth = require('./middleware/check-auth')
 // Database
 
-const sequelize = require('./api/config/database')
+const sequelize = require('./config/db');
 
-const userRoutes    = require('./api/routes/users')
-const topicRoutes   = require('./api/routes/topics')
-//const commentRoute  = require('./api/routes/comments')
-
+// Test DB
 sequelize.authenticate()
   .then(() => console.log('Database connected'))
   .catch(err => console.log(err))
 
+const userRoutes    = require('./routes/users')
+const topicRoutes   = require('./routes/topics')
+const commentRoute  = require('./routes/comments')
+
 app.use(morgan('dev'))
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
+
 
 app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*")
@@ -32,15 +35,18 @@ app.use((req, res, next) => {
 //Route whitch should handle requests
 
 app.use('/users', userRoutes)
-
 app.use('/topics', topicRoutes)
-//app.use('/comments', commentRoute)
+app.use('/comments', commentRoute)
+
+
 
 app.use((req, res, next) => {
     const error = new Error('Not found')
     error.status = 404
     next(error)
 })
+
+
 
 app.use((error, req, res, next) => {
     res.status(error.status || 500)
